@@ -1,0 +1,156 @@
+---
+title: "Day4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+
+# part1
+
+6 digit number
+two adjacent digits are the same (like 22 in 122345)
+only ever increase or stay the same
+e.g.
+111111
+How many different passwords within the range?
+178416 to 676461
+
+
+```{r}
+meet_reqs = function(x){
+  p1 = stringr::str_sub(x, 1,1) %>% as.numeric()
+  p2 = stringr::str_sub(x, 2,2) %>% as.numeric()
+  p3 = stringr::str_sub(x, 3,3) %>% as.numeric()
+  p4 = stringr::str_sub(x, 4,4) %>% as.numeric()
+  p5 = stringr::str_sub(x, 5,5) %>% as.numeric()
+  p6 = stringr::str_sub(x, 6,6) %>% as.numeric()
+  
+  if(p1 == p2 | p2 == p3 | p3 == p4 | p4 == p5 | p5 == p6){
+    cont = 1
+  } else {
+    cont = 0
+    ans = 0
+  }
+  
+  
+  if(cont == 1 & (p6 >= p5 & p5 >= p4 & p4 >= p3 & p3 >= p2 & p2 >= p1)){
+    ans = 1
+  } else {
+    ans = 0
+  }
+  
+  return(ans)
+  
+}
+```
+
+
+
+```{r}
+
+passwords = seq(178416, 676461) %>% 
+  enframe(name = NULL) %>% 
+  dplyr::rowwise() %>% 
+  mutate(valid_pwd = map(value, meet_reqs))
+
+```
+
+
+```{r}
+
+valid_passwords = passwords %>% 
+  unnest() %>% 
+  filter(valid_pwd == 1)
+
+valid_passwords
+
+```
+
+
+
+```{r}
+
+valid_passwords %>% 
+  count(valid_pwd)
+
+```
+
+
+# part 2
+An Elf just remembered one more important detail: the two adjacent matching digits are not part of a larger group of matching digits.
+
+Given this additional criterion, but still ignoring the range rule, the following are now true:
+
+112233 meets these criteria because the digits never decrease and all repeated digits are exactly two digits long.
+123444 no longer meets the criteria (the repeated 44 is part of a larger group of 444).
+111122 meets the criteria (even though 1 is repeated more than twice, it still contains a double 22).
+
+112345
+
+```{r}
+
+meet_reqs2 = function(x){
+  
+  x1 = x %>% 
+    as.character() %>% 
+    stringr::str_split("") %>% 
+    unlist() %>% 
+    enframe(name = NULL) %>% 
+    mutate(value = as.numeric(value),
+           lag_value = lag(value),
+           diffval = value - lag_value) %>% 
+    drop_na %>% 
+    mutate(no_diff = case_when(diffval == 0 ~ 1,
+                               TRUE ~ 0)) %>% 
+    filter(no_diff > 0) %>% 
+    group_by(value) %>% 
+    summarise(num_consec = sum(no_diff)) %>% 
+    select(num_consec) %>% 
+    min()
+  
+  if(x1 == 1){
+    ans = 1
+  } else {
+    ans = 0
+  }
+    
+  return(ans)
+
+}
+  
+```
+
+
+```{r}
+
+x = 112233 # should be yes
+
+x = 123444 # should be no
+
+x = 111122 # should be yes
+
+x = 112345 # shouod be yes
+
+
+meet_reqs2(x)
+
+```
+
+
+
+```{r}
+
+valid_passwords %>%
+  select(-valid_pwd) %>% 
+  mutate(valid_pwd = map(value, meet_reqs2)) %>% 
+  unnest() %>% 
+  filter(valid_pwd == 1) %>% 
+  count(valid_pwd)
+
+```
+
+
