@@ -1,0 +1,195 @@
+---
+title: "day6"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tictoc)
+```
+
+
+
+```{r}
+orbits_raw_df = read.delim("day6_data_orbits.txt", header = FALSE, sep = ")") %>% 
+  rename(orbitee = V1,
+         orbiter = V2) %>% 
+  mutate(orbitee = as.character(orbitee),
+         orbiter = as.character(orbiter))
+
+orbits_raw_df
+
+```
+
+
+look at each orbiter
+for each instance, find out it's direct orbitee
+if it is origin, stop
+else if it is not, orbitee becomes the orbiter and find it's orbitee
+
+
+
+```{r}
+
+count_orbits = function(orbiter_in, orbit_df){
+  num_orbits = 0
+  keep_going = TRUE
+  orbiter_match = orbiter_in
+  while(keep_going == TRUE){
+    orbiter_match = orbit_df %>% 
+      filter(orbiter == orbiter_match) %>% 
+      select(orbitee) %>% 
+      pull()
+    
+    num_orbits = num_orbits + 1  
+    # print(paste(orbiter_match, num_orbits))
+    if(orbiter_match != "COM"){
+      keep_going = TRUE
+    } else {
+      keep_going = FALSE
+    }
+  }
+  gc()
+  
+  return(num_orbits)
+  
+  
+}
+
+```
+
+
+```{r}
+
+orbiters = orbits_raw_df %>% 
+  select(orbiter) %>% 
+  distinct()
+
+orbiters
+
+
+```
+
+```{r}
+tic()
+full_orbits_df = orbiters %>% 
+  mutate(resultant = map(orbiter, count_orbits, orbits_raw_df))
+
+full_orbits_df %>% 
+  unnest()  %>% 
+  select(resultant) %>% 
+  sum()
+toc()
+
+```
+
+
+# part 2
+
+```{r}
+orbit_paths = function(orbiter_in, orbit_df){
+  orbits_path = c(orbiter_in)
+  keep_going = TRUE
+  orbiter_match = orbiter_in
+  while(keep_going == TRUE){
+    orbiter_match = orbit_df %>% 
+      filter(orbiter == orbiter_match) %>% 
+      select(orbitee) %>% 
+      pull()
+    orbits_path = c(orbits_path, orbiter_match)
+
+    if(orbiter_match != "COM"){
+      keep_going = TRUE
+    } else {
+      keep_going = FALSE
+    }
+  }
+  gc()
+  
+  return(orbits_path)
+  
+  
+}
+```
+
+```{r}
+tic()
+full_orbits_paths_df = orbiters %>% 
+  mutate(resultant = map(orbiter, orbit_paths, orbits_raw_df))
+
+
+toc()
+
+```
+
+
+```{r}
+
+
+you_orbit_path = full_orbits_paths_df %>% 
+  filter(orbiter == "YOU") %>% 
+  select(resultant) %>% 
+  unnest() %>% 
+  slice(-1)
+
+
+
+```
+
+
+```{r}
+
+
+san_orbit_path = full_orbits_paths_df %>% 
+  filter(orbiter == "SAN") %>% 
+  select(resultant) %>% 
+  unnest() %>% 
+  slice(-1)
+
+
+
+```
+
+
+```{r}
+tic()
+keep_going = TRUE
+i = 1
+while(keep_going == TRUE){
+    orbiter_search = you_orbit_path %>% slice(i) %>% pull()
+    match_found = san_orbit_path %>% 
+      filter(resultant == orbiter_search)
+    i = i + 1
+    if(nrow(match_found) == 1){
+      first_orbit_match = orbiter_search
+      keep_going = FALSE
+    }
+}
+toc()
+
+first_orbit_match
+```
+
+
+```{r}
+
+
+you_orbiter_match_row = which(you_orbit_path == first_orbit_match)
+
+you_orbit_path_to_match_length = you_orbit_path %>% 
+  slice(1:you_orbiter_match_row) %>% 
+  nrow() - 1
+
+san_orbiter_match_row = which(san_orbit_path == first_orbit_match)
+
+san_orbit_path_to_match_length = san_orbit_path %>% 
+  slice(1:san_orbiter_match_row) %>% 
+  nrow() - 1
+
+
+total_dist = you_orbit_path_to_match_length + san_orbit_path_to_match_length
+
+total_dist
+```
+
