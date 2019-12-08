@@ -1,0 +1,125 @@
+---
+title: "day8"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+
+# part 1
+
+```{r}
+# Test
+# img_code = read.delim("day8_test_data.txt", header = FALSE) %>% 
+#   str_split(pattern = "") %>% 
+#   unlist() %>% 
+#   as.numeric()
+# 
+# px_wide = 3
+# px_tall = 2
+```
+
+
+```{r}
+img_code = read_file("day8_data.txt") %>% 
+  str_split(pattern = "") %>% 
+  unlist() %>% 
+  as.numeric()
+
+
+px_wide = 25
+px_tall = 6
+
+```
+
+
+
+
+```{r}
+
+
+digits_in_layer = px_wide * px_tall
+
+num_layers = length(img_code) / digits_in_layer
+
+
+image_sorted = seq(1:num_layers) %>% 
+  enframe(name = NULL) %>% 
+  rename(layer = value) %>% 
+  mutate(values = map(layer, layer_values, digits_in_layer, img_code)) %>% 
+  mutate(values = map(values, layer_row_values, px_tall, px_wide)) %>% 
+  unnest() %>% 
+  unnest()
+
+
+
+```
+
+
+
+```{r}
+layer_least_zeroes = image_sorted %>% 
+  filter(values ==0) %>% 
+  group_by(layer) %>% 
+  count(values) %>% 
+  ungroup() %>% 
+  filter(n == min(n)) %>% 
+  select(layer) %>% 
+  pull()
+
+```
+
+
+```{r}
+
+
+num_1s = image_sorted %>% 
+  filter(layer == layer_least_zeroes, values == 1) %>% 
+  count(values) %>% 
+  select(n) %>% 
+  pull()
+
+
+num_2s = image_sorted %>% 
+  filter(layer == layer_least_zeroes, values == 2) %>% 
+  count(values) %>% 
+  select(n) %>% 
+  pull()
+
+num_1s * num_2s
+
+```
+
+
+# part 2
+
+```{r}
+image_sorted2 = image_sorted %>% 
+  group_by(layer, layer_row) %>% 
+  mutate(position = row_number())
+```
+ 0 = black
+ 1 = white
+ 2 = transparent
+ 
+```{r}
+image_sorted2 %>% 
+  ungroup() %>% 
+  group_by(layer_row, position) %>% 
+  filter(values != 2) %>% 
+  summarise(colour = first(values)) %>% 
+  spread(key = position, value = colour) %>% 
+  write_csv("day8_output.csv")
+
+```
+ 
+
+
+
+
+
+
+
