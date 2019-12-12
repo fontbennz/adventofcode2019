@@ -1,0 +1,212 @@
+---
+title: "day10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(tictoc)
+
+```
+
+
+
+```{r}
+
+asteroid_vectors = function(row_n, ast_row_data){
+  
+  ast_vects = ast_row_data %>% 
+    stringr::str_split("") %>% 
+    unlist() %>% 
+    enframe(name = NULL) %>% 
+    mutate(ast_x_coord = row_number(),
+           ast_y_coord = row_n) %>% 
+    filter(value == "#") %>% 
+    select(-value)
+  
+  return(ast_vects)
+}
+
+
+
+
+```
+
+
+
+```{r}
+
+num_asteroids_seeable = function(x, y, ast_vects){
+  
+  ast = paste(x, y)
+  
+  num_asts = ast_vects %>%
+    mutate(ast_v = paste(ast_x_coord, ast_y_coord)) %>% 
+    filter(ast_v != ast) %>% 
+    mutate(y_dist_from_ast = ast_y_coord - y,
+           x_dist_from_ast = ast_x_coord - x,
+           directionx = ifelse(x_dist_from_ast > 0, "forward", "backward")) %>% 
+    mutate(yxratio = y_dist_from_ast/x_dist_from_ast) %>% 
+    distinct(yxratio,directionx, .keep_all = TRUE) %>%
+    ungroup() %>% 
+    nrow()
+  
+  return(num_asts)
+    
+  
+}
+
+
+```
+
+```{r}
+file_name = "day10_input.txt"
+# file_name = "day10_testdata2.txt"
+
+ast_df_1 = readr::read_lines(file_name) %>% 
+  enframe(name = NULL)
+
+ast_df_1
+```
+
+
+```{r}
+ast_df = readr::read_lines(file_name) %>% 
+  enframe(name = NULL) %>% 
+  mutate(row_n = row_number()) %>% 
+  rowwise() %>% 
+  mutate(ast_vectors = map2(row_n, value, asteroid_vectors)) %>% 
+  select(ast_vectors) %>% 
+  unnest()
+
+ast_df
+```
+
+
+
+```{r}
+
+all_ast_vects = ast_df
+
+```
+
+
+```{r}
+ast_df %>% 
+  rowwise() %>% 
+  mutate(num_asts_seen = map2(ast_x_coord, ast_y_coord, num_asteroids_seeable, all_ast_vects)) %>% 
+  unnest() %>% 
+  filter(num_asts_seen == max(num_asts_seen))
+```
+
+
+# part 2
+
+
+```{r}
+
+x = 20 #20    12
+y = 12 #12    14
+
+ast_df %>% 
+  filter(ast_x_coord == x & ast_y_coord == y) %>% 
+  mutate(num_asts_seen = map2(ast_x_coord, ast_y_coord, num_asteroids_seeable, all_ast_vects)) %>% 
+  unnest()
+
+```
+
+```{r}
+
+# x = 20
+# y = 12
+ast = paste(x, y)
+
+ast_vects = ast_df
+```
+
+
+```{r}
+
+  
+
+
+  ast_vecs2 = ast_vects %>%
+    mutate(ast_v = paste(ast_x_coord, ast_y_coord)) %>% 
+    filter(ast_v != ast) %>%
+    mutate(y_dist_from_ast = y - ast_y_coord,
+           x_dist_from_ast = ast_x_coord - x,
+           directionx = ifelse(x_dist_from_ast > 0, "forward", "backward")) %>% 
+    mutate(yxratio = y_dist_from_ast/x_dist_from_ast,
+           directionx = case_when(yxratio %in% c(Inf, -Inf) ~ "forward",
+                                  TRUE ~ directionx)) %>% 
+    # group_by(yxratio) %>% 
+    arrange(desc(directionx), desc(yxratio), desc(ast_y_coord)) %>% 
+    mutate(asteroid = 1) %>% 
+    ungroup() %>% 
+    mutate(destroyed = "no",
+           radians = atan2(y_dist_from_ast,x_dist_from_ast))
+
+  
+  for(i in 2:nrow(ast_vecs2)) {
+    if(ast_vecs2$yxratio[i] == ast_vecs2$yxratio[i-1]){
+      ast_vecs2$asteroid[i] = ast_vecs2$asteroid[i-1] + 1
+    }
+  }
+  
+
+  
+  ast_vecs3 = ast_vecs2
+  
+i_row = 1
+i_loop = 1
+next_row = 1
+destroyed_asteroid_tally = 0
+
+
+keep_going = TRUE
+
+```
+
+
+
+
+```{r}
+
+while(keep_going == TRUE){
+  
+  if(destroyed_asteroid_tally < 200){
+    if(next_row <= nrow(ast_vecs3)){
+      if(ast_vecs3$asteroid[next_row] == i_loop){
+        destroyed_asteroid_tally = destroyed_asteroid_tally + 1
+        ast_vecs3$destroyed[next_row] = "pewed"
+        next_row = next_row + 1
+      } else {
+        next_row = next_row + 1
+      }
+    } else {
+      i_loop = i_loop + 1
+    }
+  } else {
+    keep_going = FALSE
+  }
+}
+
+destroyed_asteroid_tally
+i_loop
+last_row = next_row - 1
+last_row
+
+
+```
+
+
+```{r}
+x = ast_vecs3 %>% slice(last_row) %>% select(ast_x_coord) -1
+y = ast_vecs3 %>% slice(last_row) %>% select(ast_y_coord) -1
+
+x*100+y
+
+```
+
