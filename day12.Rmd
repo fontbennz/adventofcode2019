@@ -1,0 +1,126 @@
+---
+title: "day12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+
+# part1
+
+```{r}
+moon1_pos = c(16, -11, 2)
+moon2_pos = c(0, -4, 7)
+moon3_pos = c(6, 4, -10)
+moon4_pos = c(-3, -2, -4)
+
+
+# moon1_pos = c(-1, 0, 2)
+# moon2_pos = c(2, -10, -7)
+# moon3_pos = c(4, -8, 8)
+# moon4_pos = c(3, 5, -1)
+
+
+moon1_vel = c(0,0,0)
+moon2_vel = moon1_vel
+moon3_vel = moon1_vel
+moon4_vel = moon1_vel
+
+```
+
+
+
+```{r}
+apply_gravity = function(moona_pos_vect, moonb_pos_vect){
+  vel_delta = c()
+  for(i in 1:3){
+    if(moona_pos_vect[i] < moonb_pos_vect[i]){
+      vel_delta[i] = 1
+    } else if (moona_pos_vect[i] > moonb_pos_vect[i]){
+      vel_delta[i] = -1
+    } else {
+      vel_delta[i] = 0
+    }  
+  }
+  
+  return(vel_delta)
+}
+
+apply_velocity = function(vel_vect, pos_vect){
+  pos_vect_out = pos_vect + vel_vect 
+  
+  return(pos_vect_out)
+}
+```
+
+
+
+
+```{r}
+
+for(i in 1:1000){
+  
+  moon1_2_vel = apply_gravity(moon1_pos, moon2_pos)
+  moon1_3_vel = apply_gravity(moon1_pos, moon3_pos)
+  moon1_4_vel = apply_gravity(moon1_pos, moon4_pos)
+  moon1_vel_change = moon1_2_vel + moon1_3_vel + moon1_4_vel
+  moon1_vel = moon1_vel + moon1_vel_change
+
+  
+  moon2_1_vel = apply_gravity(moon2_pos, moon1_pos)
+  moon2_3_vel = apply_gravity(moon2_pos, moon3_pos)
+  moon2_4_vel = apply_gravity(moon2_pos, moon4_pos)
+  moon2_vel_change = moon2_1_vel + moon2_3_vel + moon2_4_vel
+  moon2_vel = moon2_vel + moon2_vel_change
+  
+  moon3_1_vel = apply_gravity(moon3_pos, moon1_pos)
+  moon3_2_vel = apply_gravity(moon3_pos, moon2_pos)
+  moon3_4_vel = apply_gravity(moon3_pos, moon4_pos)
+  moon3_vel_change = moon3_1_vel + moon3_2_vel + moon3_4_vel
+  moon3_vel = moon3_vel + moon3_vel_change
+  
+  moon4_1_vel = apply_gravity(moon4_pos, moon1_pos)
+  moon4_2_vel = apply_gravity(moon4_pos, moon2_pos)
+  moon4_3_vel = apply_gravity(moon4_pos, moon3_pos)
+  moon4_vel_change = moon4_1_vel + moon4_2_vel + moon4_3_vel
+  moon4_vel = moon4_vel + moon4_vel_change
+  
+
+  moon1_pos = moon1_pos + moon1_vel
+  moon2_pos = moon2_pos + moon2_vel
+  moon3_pos = moon3_pos + moon3_vel
+  moon4_pos = moon4_pos + moon4_vel
+  
+}
+
+
+```
+
+
+```{r}
+
+pot1 = sum(abs(moon1_pos))
+pot2 = sum(abs(moon2_pos))
+pot3 = sum(abs(moon3_pos))
+pot4 = sum(abs(moon4_pos))
+
+kin1 = sum(abs(moon1_vel))
+kin2 = sum(abs(moon2_vel))
+kin3 = sum(abs(moon3_vel))
+kin4 = sum(abs(moon4_vel))
+
+total1 = pot1 * kin1
+total2 = pot2 * kin2
+total3 = pot3 * kin3
+total4 = pot4 * kin4
+
+
+total_nrg = total1 + total2 + total3 + total4
+
+total_nrg
+
+```
+
