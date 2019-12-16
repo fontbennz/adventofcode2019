@@ -12,12 +12,13 @@ library(tidyverse)
 # part1
 
 ```{r}
+# my inputs
 moon1_pos = c(16, -11, 2)
 moon2_pos = c(0, -4, 7)
 moon3_pos = c(6, 4, -10)
 moon4_pos = c(-3, -2, -4)
 
-
+# example 1
 # moon1_pos = c(-1, 0, 2)
 # moon2_pos = c(2, -10, -7)
 # moon3_pos = c(4, -8, 8)
@@ -36,7 +37,7 @@ moon4_vel = moon1_vel
 ```{r}
 apply_gravity = function(moona_pos_vect, moonb_pos_vect){
   vel_delta = c()
-  for(i in 1:3){
+  for(i in 1:length(moona_pos_vect)){
     if(moona_pos_vect[i] < moonb_pos_vect[i]){
       vel_delta[i] = 1
     } else if (moona_pos_vect[i] > moonb_pos_vect[i]){
@@ -123,4 +124,210 @@ total_nrg = total1 + total2 + total3 + total4
 total_nrg
 
 ```
+
+
+# part 2
+
+
+```{r}
+# # example 1
+# moon1_pos = c(-1, 0, 2)
+# moon2_pos = c(2, -10, -7)
+# moon3_pos = c(4, -8, 8)
+# moon4_pos = c(3, 5, -1)
+
+# # example 2
+# moon1_pos = c(-8, -10, 0)
+# moon2_pos = c(5, 5, 10)
+# moon3_pos = c(2, -7, 3)
+# moon4_pos = c(9, -8, -3)
+
+
+moon1_vel = c(0,0,0)
+moon2_vel = moon1_vel
+moon3_vel = moon1_vel
+moon4_vel = moon1_vel
+
+# my inputs
+moon1_pos = c(16, -11, 2)
+moon2_pos = c(0, -4, 7)
+moon3_pos = c(6, 4, -10)
+moon4_pos = c(-3, -2, -4)
+```
+
+
+```{r}
+
+all_moon_x_pos = c(moon1_pos[1], moon2_pos[1], moon3_pos[1], moon4_pos[1])
+all_moon_y_pos = c(moon1_pos[2], moon2_pos[2], moon3_pos[2], moon4_pos[2])
+all_moon_z_pos = c(moon1_pos[3], moon2_pos[3], moon3_pos[3], moon4_pos[3])
+
+all_moon_x_pos_chr = c(paste(all_moon_x_pos, collapse=""))
+all_moon_y_pos_chr = c(paste(all_moon_y_pos, collapse=""))
+all_moon_z_pos_chr = c(paste(all_moon_z_pos, collapse=""))
+
+
+
+all_moon_x_vel = c(moon1_vel[1], moon2_vel[1], moon3_vel[1], moon4_vel[1])
+all_moon_y_vel = all_moon_x_vel
+all_moon_z_vel = all_moon_x_vel
+
+all_moon_x_vel_chr = c(paste(all_moon_x_vel, collapse=""))
+all_moon_y_vel_chr = c(paste(all_moon_y_vel, collapse=""))
+all_moon_z_vel_chr = c(paste(all_moon_z_vel, collapse=""))
+
+```
+
+
+
+```{r}
+
+
+
+
+moon_states <- function(moon_pos, moon_vel, moon_start_pos_chr, moon_start_vel_chr){
+
+  all_moons_pos_accum = c(moon_start_pos_chr)
+  all_moons_vel_accum = c(moon_start_vel_chr)
+  time_step = 1
+  keep_going = TRUE
+  matches = 0
+  matches_pos = c()
+  matches_vel = c()
+  time_step_out= c()
+  while(keep_going == TRUE){
+
+    moon1_2_vel = apply_gravity(moon_pos[1], moon_pos[2])
+    moon1_3_vel = apply_gravity(moon_pos[1], moon_pos[3])
+    moon1_4_vel = apply_gravity(moon_pos[1], moon_pos[4])
+    moon1_vel_change = moon1_2_vel + moon1_3_vel + moon1_4_vel
+    moon1_vel = moon_vel[1] + moon1_vel_change
+    
+    moon2_1_vel = apply_gravity(moon_pos[2], moon_pos[1])
+    moon2_3_vel = apply_gravity(moon_pos[2], moon_pos[3])
+    moon2_4_vel = apply_gravity(moon_pos[2], moon_pos[4])
+    moon2_vel_change = moon2_1_vel + moon2_3_vel + moon2_4_vel
+    moon2_vel = moon_vel[2] + moon2_vel_change
+    
+    moon3_1_vel = apply_gravity(moon_pos[3], moon_pos[1])
+    moon3_2_vel = apply_gravity(moon_pos[3], moon_pos[2])
+    moon3_4_vel = apply_gravity(moon_pos[3], moon_pos[4])
+    moon3_vel_change = moon3_1_vel + moon3_2_vel + moon3_4_vel
+    moon3_vel = moon_vel[3] + moon3_vel_change
+    
+    moon4_1_vel = apply_gravity(moon_pos[4], moon_pos[1])
+    moon4_2_vel = apply_gravity(moon_pos[4], moon_pos[2])
+    moon4_3_vel = apply_gravity(moon_pos[4], moon_pos[3])
+    moon4_vel_change = moon4_1_vel + moon4_2_vel + moon4_3_vel
+    moon4_vel = moon_vel[4] + moon4_vel_change
+    
+    all_moons_vel = c(moon1_vel, moon2_vel, moon3_vel, moon4_vel)
+    all_moons_vel_chr = c(paste(all_moons_vel, collapse=""))
+    
+    
+    moon1_pos = moon_pos[1] + moon1_vel
+    moon2_pos = moon_pos[2] + moon2_vel
+    moon3_pos = moon_pos[3] + moon3_vel
+    moon4_pos = moon_pos[4] + moon4_vel
+    
+    all_moons_pos = c(moon1_pos, moon2_pos, moon3_pos, moon4_pos)
+    all_moons_pos_chr = c(paste(all_moons_pos, collapse=""))
+    
+    if (all_moons_pos_chr %in% all_moons_pos_accum){
+      i = which(all_moons_pos_accum == all_moons_pos_chr)
+      if(all_moons_vel_chr == all_moons_vel_accum[i]){
+        matches_pos = c(matches_pos, all_moons_pos)
+        matches_vel = c(matches_vel, all_moons_vel)
+        time_step_out = c(time_step_out, time_step)
+        matches = matches + 1
+        all_moons_pos_accum = c(all_moons_pos_accum, all_moons_pos_chr)
+        all_moons_vel_accum = c(all_moons_vel_accum, all_moons_vel_chr)
+        time_step = time_step + 1
+        moon_pos = all_moons_pos
+        moon_vel = all_moons_vel 
+      } else {
+        all_moons_pos_accum = c(all_moons_pos_accum, all_moons_pos_chr)
+        all_moons_vel_accum = c(all_moons_vel_accum, all_moons_vel_chr)
+        time_step = time_step + 1
+        moon_pos = all_moons_pos
+        moon_vel = all_moons_vel
+      } 
+    } else {
+      all_moons_pos_accum = c(all_moons_pos_accum, all_moons_pos_chr)
+      all_moons_vel_accum = c(all_moons_vel_accum, all_moons_vel_chr)
+      time_step = time_step + 1
+      moon_pos = all_moons_pos
+      moon_vel = all_moons_vel
+    }
+    
+    if(matches == 1){
+      time_step = time_step - 1
+      keep_going = FALSE
+    }
+    
+    
+  }
+  return(list(time_step_out, matches_pos, matches_vel))
+  # return(list(time_step, all_moons_pos, all_moons_vel))
+}
+
+
+
+```
+
+
+
+
+```{r}
+
+
+
+x_state = moon_states(all_moon_x_pos, all_moon_x_vel, all_moon_x_pos_chr, all_moon_x_vel_chr)
+y_state = moon_states(all_moon_y_pos, all_moon_y_vel, all_moon_y_pos_chr, all_moon_y_vel_chr)
+z_state = moon_states(all_moon_z_pos, all_moon_z_vel, all_moon_z_pos_chr, all_moon_z_vel_chr)
+
+```
+
+
+```{r}
+x_states = x_state[1] %>% unlist() %>% 
+  enframe(name = NULL) %>% 
+  mutate(x_time = 1)
+
+y_states = y_state[1] %>% unlist() %>% 
+  enframe(name = NULL) %>% 
+  mutate(y_time = 1)
+
+z_states = z_state[1] %>% unlist() %>% 
+  enframe(name = NULL) %>% 
+  mutate(z_time = 1)
+
+
+
+# x_states %>% 
+#   full_join(y_states) %>% 
+#   full_join(z_states) %>% 
+#   rowwise() %>% 
+#   mutate(total_matches = sum(x_time, y_time, z_time, na.rm = TRUE)) %>% 
+#   filter(total_matches == 3)
+```
+
+```{r}
+xmult = x_states = x_state[1] %>% unlist() 
+xmult = xmult[1]
+
+ymult = y_states = y_state[1] %>% unlist() 
+ymult = ymult[1]
+
+zmult = z_states = z_state[1] %>% unlist() 
+zmult = zmult[1]
+
+lcm_answer = numbers::mLCM(c(xmult, ymult, zmult))
+print(lcm_answer)
+sprintf("%100f.",lcm_answer)
+# 374307970285176
+
+```
+
+
 
